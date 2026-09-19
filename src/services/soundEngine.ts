@@ -1,10 +1,21 @@
 import { AlarmTone } from '../types';
+import { ROAST_MESSAGES_EN } from './roastService';
 
 class SoundEngine {
   private ctx: AudioContext | null = null;
   private alarmInterval: number | null = null;
   private isAlarmPlaying = false;
   private gainNode: GainNode | null = null;
+  private cachedVoices: SpeechSynthesisVoice[] = [];
+
+  constructor() {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      this.cachedVoices = window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        this.cachedVoices = window.speechSynthesis.getVoices();
+      };
+    }
+  }
 
   private initContext() {
     if (!this.ctx) {
@@ -33,7 +44,6 @@ class SoundEngine {
 
       switch (tone) {
         case 'nuclear': {
-          // Nuclear siren: rising and falling pitch
           const osc = this.ctx.createOscillator();
           const oscGain = this.ctx.createGain();
           osc.type = 'sawtooth';
@@ -53,15 +63,13 @@ class SoundEngine {
         }
 
         case 'airhorn': {
-          // Airhorn style triple blast
-          const freqs = [466.16, 622.25, 783.99]; // Bb4, Eb5, G5
+          const freqs = [466.16, 622.25, 783.99];
           freqs.forEach((freq) => {
             const osc = this.ctx!.createOscillator();
             const g = this.ctx!.createGain();
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(freq, now);
 
-            // 3 quick blasts
             [0, 0.18, 0.36].forEach((offset) => {
               g.gain.setValueAtTime(0.4, now + offset);
               g.gain.exponentialRampToValueAtTime(0.01, now + offset + 0.14);
@@ -76,8 +84,7 @@ class SoundEngine {
         }
 
         case 'retro': {
-          // 8-bit fast arpeggio
-          const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+          const notes = [523.25, 659.25, 783.99, 1046.5];
           notes.forEach((freq, idx) => {
             const osc = this.ctx!.createOscillator();
             const g = this.ctx!.createGain();
@@ -95,7 +102,6 @@ class SoundEngine {
         }
 
         case 'rooster': {
-          // Cock-a-doodle-doo chirp synth
           const osc = this.ctx.createOscillator();
           const g = this.ctx.createGain();
           osc.type = 'triangle';
@@ -115,12 +121,11 @@ class SoundEngine {
 
         case 'digital':
         default: {
-          // Classic beep beep beep
           [0, 0.15, 0.3, 0.45].forEach((t) => {
             const osc = this.ctx!.createOscillator();
             const g = this.ctx!.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(1046.5, now + t); // C6
+            osc.frequency.setValueAtTime(1046.5, now + t);
             g.gain.setValueAtTime(0.5, now + t);
             g.gain.exponentialRampToValueAtTime(0.001, now + t + 0.09);
 
@@ -134,7 +139,6 @@ class SoundEngine {
       }
     };
 
-    // Trigger immediately then loop every 1.5s
     playCycle();
     this.alarmInterval = window.setInterval(playCycle, 1500);
   }
@@ -147,15 +151,10 @@ class SoundEngine {
     }
   }
 
-  public playCashChing() {
-    this.playApplePaySuccess();
-  }
-
   public playApplePaySuccess() {
     const ctx = this.initContext();
     const now = ctx.currentTime;
 
-    // Tone 1
     const osc1 = ctx.createOscillator();
     const g1 = ctx.createGain();
     osc1.type = 'sine';
@@ -167,7 +166,6 @@ class SoundEngine {
     osc1.start(now);
     osc1.stop(now + 0.35);
 
-    // Tone 2 (Signature high chime)
     const osc2 = ctx.createOscillator();
     const g2 = ctx.createGain();
     osc2.type = 'sine';
@@ -183,7 +181,7 @@ class SoundEngine {
   public playCelebration() {
     const ctx = this.initContext();
     const now = ctx.currentTime;
-    const chords = [523.25, 659.25, 783.99, 1046.5]; // C major fanfare
+    const chords = [523.25, 659.25, 783.99, 1046.5];
 
     chords.forEach((freq, idx) => {
       const osc = ctx.createOscillator();
@@ -199,17 +197,48 @@ class SoundEngine {
     });
   }
 
-  public speakRoast(text: string, lang: 'vi' | 'en' = 'vi') {
-    if (!('speechSynthesis' in window)) return;
+  public speakRoast(text: string, requestedLang: 'vi' | 'en' = 'en') {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
     try {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang === 'vi' ? 'vi-VN' : 'en-US';
-      utterance.rate = 1.05;
-      utterance.pitch = 1.1;
+
+      if (!this.cachedVoices || this.cachedVoices.length === 0) {
+        this.cachedVoices = window.speechSynthesis.getVoices();
+      }
+
+      let chosenVoice: SpeechSynthesisVoice | null = null;
+      let textToRead = text;
+      let targetLang = requestedLang === 'vi' ? 'vi-VN' : 'en-US';
+
+      if (requestedLang === 'vi') {
+        const viVoice = this.cachedVoices.find(v => v.lang.toLowerCase().startsWith('vi'));
+        if (viVoice) {
+          chosenVoice = viVoice;
+        } else {
+          // Fallback: If device has no Vietnamese TTS voice installed,
+          // do NOT read Vietnamese using English voice (which causes severe mispronunciation).
+          // Instead, speak a sharp English roast with native English voice!
+          targetLang = 'en-US';
+          textToRead = ROAST_MESSAGES_EN[Math.floor(Math.random() * ROAST_MESSAGES_EN.length)];
+          chosenVoice = this.cachedVoices.find(v => v.lang.toLowerCase().startsWith('en')) || null;
+        }
+      } else {
+        chosenVoice = this.cachedVoices.find(v => v.lang.toLowerCase().startsWith('en')) || null;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(textToRead);
+      utterance.lang = targetLang;
+      if (chosenVoice) {
+        utterance.voice = chosenVoice;
+      }
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
       window.speechSynthesis.speak(utterance);
     } catch {
-      // Ignore if TTS is not supported or blocked
+      // Ignore if TTS is blocked
     }
   }
 }

@@ -25,12 +25,15 @@ import { ActiveAlarmOverlay } from './components/ActiveAlarmOverlay';
 import { DebtLedgerModal } from './components/DebtLedgerModal';
 import { SettingsModal } from './components/SettingsModal';
 import { triggerHaptic } from './services/haptics';
+import { Language, TRANSLATIONS } from './services/i18n';
 
 export function App() {
   const [alarms, setAlarms] = useState<Alarm[]>(loadAlarms);
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
   const [records, setRecords] = useState<SnoozeRecord[]>(loadRecords);
   const [stats, setStats] = useState<UserStats>(loadStats);
+
+  const t = TRANSLATIONS[settings.language];
 
   // Modals state
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
@@ -49,6 +52,18 @@ export function App() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleToggleLanguage = () => {
+    const nextLang: Language = settings.language === 'en' ? 'vi' : 'en';
+    const nextCurrency = nextLang === 'en' ? 'USD' : 'VND';
+    setSettings(prev => ({
+      ...prev,
+      language: nextLang,
+      currency: nextCurrency
+    }));
+    triggerHaptic('light');
+    showToast(nextLang === 'en' ? 'Switched to English (USD)' : 'Đã chuyển sang Tiếng Việt (VNĐ)');
   };
 
   // Sync to localStorage
@@ -116,7 +131,7 @@ export function App() {
       setAlarms(prev =>
         prev.map(a => (a.id === editingId ? { ...a, ...alarmData } : a))
       );
-      showToast('Đã cập nhật báo thức!');
+      showToast(t.toastAlarmSaved);
     } else {
       const newAlarm: Alarm = {
         ...alarmData,
@@ -124,7 +139,7 @@ export function App() {
         snoozeCount: 0
       };
       setAlarms(prev => [...prev, newAlarm]);
-      showToast('Đã thêm báo thức mới!');
+      showToast(t.toastAlarmSaved);
     }
   };
 
@@ -139,7 +154,7 @@ export function App() {
   // Delete alarm
   const handleDeleteAlarm = (id: string) => {
     setAlarms(prev => prev.filter(a => a.id !== id));
-    showToast('Đã xóa báo thức');
+    showToast(settings.language === 'vi' ? 'Đã xóa báo thức' : 'Alarm deleted');
     triggerHaptic('medium');
   };
 
@@ -150,7 +165,7 @@ export function App() {
       alarms[0] || {
         id: 'test-alarm',
         time: '07:00',
-        label: 'Chuông thử nghiệm tốc độ cao',
+        label: settings.language === 'vi' ? 'Chuông thử nghiệm tốc độ cao' : 'High-speed test alarm',
         enabled: true,
         days: [0, 1, 2, 3, 4, 5, 6],
         snoozeFee: settings.currency === 'USD' ? 5 : 50000,
@@ -171,7 +186,7 @@ export function App() {
       totalOnTimeCount: prev.totalOnTimeCount + 1,
       currentStreak: prev.currentStreak + 1
     }));
-    showToast('🎉 Thức dậy đúng giờ xuất sắc! Không mất 1 xu nào!');
+    showToast(t.toastWokeUp);
   };
 
   // User snoozes: Paid via Apple Pay / Google Pay!
@@ -202,7 +217,8 @@ export function App() {
     // Auto close ringing alarm overlay to let user sleep
     setActiveRingingAlarm(null);
 
-    showToast(`✓ Đã quẹt Pay -${isUSD ? `$${fee}` : `${fee.toLocaleString('vi-VN')} đ`}! Bệ hạ có 5 phút ngủ tiếp.`);
+    const feeText = isUSD ? `$${fee.toFixed(2)}` : `${fee.toLocaleString('vi-VN')} đ`;
+    showToast(t.toastPaid.replace('{fee}', feeText));
 
     // Reschedule ringing in 5 minutes
     setTimeout(() => {
@@ -221,7 +237,7 @@ export function App() {
       currentStreak: 0,
       worstDay: 'Chưa có'
     }));
-    showToast('Đã đặt lại toàn bộ sổ nợ về 0!');
+    showToast(t.toastReset);
   };
 
   const handleInstallPWA = async () => {
@@ -251,6 +267,8 @@ export function App() {
         totalPenaltyUSD={stats.totalPenaltyUSD}
         totalPenaltyVND={stats.totalPenaltyVND}
         currency={settings.currency}
+        language={settings.language}
+        onToggleLanguage={handleToggleLanguage}
         onOpenLedger={() => setIsLedgerOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onTriggerTestAlarm={() => handleTriggerTest()}
@@ -264,20 +282,20 @@ export function App() {
             <div className="flex items-center gap-2">
               <Download className="w-4 h-4 text-red-400" />
               <p className="text-xs text-neutral-300">
-                Cài ứng dụng ra màn hình chính để dùng tiện hơn!
+                {settings.language === 'vi' ? 'Cài ứng dụng ra màn hình chính để dùng tiện hơn!' : 'Install app to home screen for quick access!'}
               </p>
             </div>
             <button
               onClick={handleInstallPWA}
               className="px-2.5 py-1 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all whitespace-nowrap"
             >
-              Cài ngay
+              {settings.language === 'vi' ? 'Cài ngay' : 'Install'}
             </button>
           </div>
         )}
 
         {/* Live Clock Display */}
-        <ClockDisplay alarms={alarms} />
+        <ClockDisplay alarms={alarms} language={settings.language} />
 
         {/* Minimalist Bold Value Proposition Banner */}
         <div className="my-4 p-3.5 rounded-2xl bg-neutral-900/80 border border-neutral-800 flex items-center justify-between gap-3 text-xs">
@@ -287,10 +305,10 @@ export function App() {
             </div>
             <div>
               <p className="font-extrabold text-white">
-                {settings.currency === 'USD' ? '$5.00' : '50.000 đ'} / Lượt Bấm Snooze
+                {settings.currency === 'USD' ? '$5.00' : '50.000 đ'} / {settings.language === 'vi' ? 'Lượt Bấm Snooze' : 'Per Snooze'}
               </p>
               <p className="text-[11px] text-neutral-400">
-                Quẹt thẻ Apple Pay Face ID 1-chạm cực nhanh để ngủ tiếp
+                {t.snoozeDesc}
               </p>
             </div>
           </div>
@@ -299,7 +317,7 @@ export function App() {
         {/* Alarm List Header */}
         <div className="flex items-center justify-between mb-3 mt-6">
           <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400">
-            Danh Sách Báo Thức ({alarms.length})
+            {t.alarmList} ({alarms.length})
           </h2>
           <button
             onClick={() => {
@@ -309,7 +327,7 @@ export function App() {
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-md shadow-red-600/30 transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>Thêm Báo Thức</span>
+            <span>{t.addAlarm}</span>
           </button>
         </div>
 
@@ -317,9 +335,9 @@ export function App() {
         {alarms.length === 0 ? (
           <div className="p-8 text-center rounded-3xl bg-neutral-900/60 border border-neutral-800 my-6">
             <Clock className="w-10 h-10 text-neutral-600 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-neutral-300">Chưa có báo thức nào</p>
+            <p className="text-sm font-semibold text-neutral-300">{t.noAlarms}</p>
             <p className="text-xs text-neutral-500 mt-1">
-              Bấm "Thêm Báo Thức" để đặt giờ thức dậy!
+              {t.createFirstAlarm}
             </p>
           </div>
         ) : (
@@ -328,6 +346,7 @@ export function App() {
               <AlarmCard
                 key={alarm.id}
                 alarm={alarm}
+                language={settings.language}
                 onToggle={handleToggleAlarm}
                 onEdit={a => {
                   setEditingAlarm(a);
@@ -351,6 +370,7 @@ export function App() {
         onSave={handleSaveAlarm}
         editingAlarm={editingAlarm}
         defaultCurrency={settings.currency}
+        language={settings.language}
       />
 
       <DebtLedgerModal
@@ -359,6 +379,7 @@ export function App() {
         stats={stats}
         records={records}
         currency={settings.currency}
+        language={settings.language}
         onResetLedger={handleResetLedger}
       />
 
@@ -369,7 +390,7 @@ export function App() {
         onSaveSettings={setSettings}
       />
 
-      {/* Active Ringing Alarm Overlay (with Apple Pay Sheet) */}
+      {/* Active Ringing Alarm Overlay */}
       {activeRingingAlarm && (
         <ActiveAlarmOverlay
           alarm={activeRingingAlarm}

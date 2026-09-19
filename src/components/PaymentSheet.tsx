@@ -3,13 +3,14 @@ import { Check, CreditCard, ScanFace, Fingerprint, Bell, ShieldCheck, X } from '
 import { Currency } from '../types';
 import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/haptics';
+import { Language, TRANSLATIONS } from '../services/i18n';
 
 interface PaymentSheetProps {
   isOpen: boolean;
   onClose: () => void;
   fee: number;
   currency: Currency;
-  beneficiaryName: string;
+  language: Language;
   onPaymentSuccess: () => void;
 }
 
@@ -18,7 +19,7 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
   onClose,
   fee,
   currency,
-  beneficiaryName,
+  language,
   onPaymentSuccess
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -27,6 +28,7 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
 
   if (!isOpen) return null;
 
+  const t = TRANSLATIONS[language];
   const feeDisplay =
     currency === 'USD'
       ? `$${fee.toFixed(2)}`
@@ -38,24 +40,24 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
     setIsProcessing(true);
     triggerHaptic('medium');
 
-    // Simulate Face ID / Fingerprint verification for 0.8s
+    // Simulate Face ID / Fingerprint verification for 0.85s
     setTimeout(() => {
       setIsProcessing(false);
       setIsSuccess(true);
       soundEngine.playApplePaySuccess();
       triggerHaptic('heavy');
 
-      // Show mock bank transaction push notification
+      // Mock bank transaction push notification
       setBankNotification(
         currency === 'USD'
-          ? `Apple Card: Thanh toán -$${fee.toFixed(2)} tại Snooze Tax thành công.`
-          : `MBBank: Thẻ Visa •••• 8868 vừa quẹt -${fee.toLocaleString('vi-VN')}đ tại SNOOZE TAX.`
+          ? `Apple Card: -$${fee.toFixed(2)} paid to Snooze Tax Inc. Enjoy 5 more minutes!`
+          : `Visa •••• 8868: Đã thanh toán -${fee.toLocaleString('vi-VN')}đ tại Snooze Tax Inc.`
       );
 
-      // Auto finish and snooze alarm after 1.4s
+      // Auto finish and snooze alarm after 1.3s
       setTimeout(() => {
         onPaymentSuccess();
-      }, 1400);
+      }, 1300);
     }, 850);
   };
 
@@ -69,8 +71,8 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
           </div>
           <div className="flex-1 text-xs">
             <div className="flex items-center justify-between text-neutral-400 text-[10px] font-semibold">
-              <span>BIẾN ĐỘNG SỐ DƯ THẺ</span>
-              <span>Vừa xong</span>
+              <span>{language === 'vi' ? 'BIẾN ĐỘNG SỐ DƯ THẺ' : 'CARD TRANSACTION ALERT'}</span>
+              <span>{language === 'vi' ? 'Vừa xong' : 'Just now'}</span>
             </div>
             <p className="text-white font-bold mt-0.5">{bankNotification}</p>
           </div>
@@ -98,13 +100,13 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
         {/* Big Payment Summary */}
         <div className="text-center py-5">
           <span className="text-[11px] uppercase tracking-widest text-red-400 font-bold block mb-1">
-            Thanh Toán Mua 5 Phút Ngủ Thêm
+            {t.payModalTitle}
           </span>
           <div className="text-5xl font-black font-mono tracking-tight text-white my-1">
             {feeDisplay}
           </div>
           <p className="text-xs text-neutral-400">
-            Thụ hưởng: <strong className="text-neutral-200">{beneficiaryName}</strong>
+            {t.payModalBeneficiary}
           </p>
         </div>
 
@@ -120,7 +122,8 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
                 <span className="text-[10px] text-neutral-400 font-mono">•••• 8868</span>
               </div>
               <p className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> Xác thực bảo mật sinh trắc học
+                <ShieldCheck className="w-3 h-3" />
+                <span>{language === 'vi' ? 'Xác thực sinh trắc học an toàn' : 'Biometric Face ID Secured'}</span>
               </p>
             </div>
           </div>
@@ -141,25 +144,25 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
               {isProcessing ? (
                 <>
                   <ScanFace className="w-5 h-5 animate-pulse text-sky-500" />
-                  <span>Đang quét Face ID khuôn mặt ngái ngủ...</span>
+                  <span>{t.scanningFace}</span>
                 </>
               ) : (
                 <>
                   <ScanFace className="w-5 h-5 text-black" />
-                  <span>Xác Nhận Face ID Quẹt {feeDisplay}</span>
+                  <span>{t.payConfirmBtn.replace('{fee}', feeDisplay)}</span>
                 </>
               )}
             </button>
           ) : (
             <div className="py-4 px-6 rounded-2xl bg-emerald-500 text-black font-extrabold text-base flex items-center justify-center gap-2 animate-bounce-short">
               <Check className="w-6 h-6 stroke-[3]" />
-              <span>Thanh Toán Thành Công! Đang cho ngủ...</span>
+              <span>{t.paySuccess}</span>
             </div>
           )}
 
           <p className="text-[10px] text-neutral-500 mt-3 flex items-center justify-center gap-1">
             <Fingerprint className="w-3 h-3" />
-            <span>Chạm xác thực 1 giây để chuông tắt và được ngủ tiếp</span>
+            <span>{t.payFooterHint}</span>
           </p>
         </div>
       </div>

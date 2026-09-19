@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Volume2, Play, DollarSign, Calculator, Check } from 'lucide-react';
 import { Alarm, AlarmTone, Currency } from '../types';
 import { soundEngine } from '../services/soundEngine';
+import { Language, TRANSLATIONS } from '../services/i18n';
 
 interface AlarmModalProps {
   isOpen: boolean;
@@ -9,9 +10,10 @@ interface AlarmModalProps {
   onSave: (alarm: Omit<Alarm, 'id' | 'snoozeCount'>, editingId?: string) => void;
   editingAlarm?: Alarm | null;
   defaultCurrency: Currency;
+  language: Language;
 }
 
-const TONES: { id: AlarmTone; name: string; desc: string }[] = [
+const TONES_VI: { id: AlarmTone; name: string; desc: string }[] = [
   { id: 'digital', name: 'Điện tử cổ điển', desc: 'Beep beep dồn dập' },
   { id: 'nuclear', name: 'Còi báo động hạt nhân', desc: 'Hú giật mình thon thót' },
   { id: 'airhorn', name: 'Kèn xung trận Airhorn', desc: 'Náo loạn cả xóm' },
@@ -19,19 +21,30 @@ const TONES: { id: AlarmTone; name: string; desc: string }[] = [
   { id: 'retro', name: '8-Bit Arcade Game', desc: 'Giai điệu game retro 8-bit' }
 ];
 
+const TONES_EN: { id: AlarmTone; name: string; desc: string }[] = [
+  { id: 'digital', name: 'Classic Digital', desc: 'Urgent beeps' },
+  { id: 'nuclear', name: 'Nuclear Siren', desc: 'Adrenaline rushing wail' },
+  { id: 'airhorn', name: 'Battle Airhorn', desc: 'Wakes the whole neighborhood' },
+  { id: 'rooster', name: 'Synth Rooster', desc: 'Futuristic morning crow' },
+  { id: 'retro', name: '8-Bit Arcade', desc: 'Nostalgic retro melody' }
+];
+
 const PRESET_FEES_USD = [1, 2, 5, 10, 20];
 const PRESET_FEES_VND = [20000, 50000, 100000, 200000];
-const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const DAY_LABELS_VI = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const DAY_LABELS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const AlarmModal: React.FC<AlarmModalProps> = ({
   isOpen,
   onClose,
   onSave,
   editingAlarm,
-  defaultCurrency
+  defaultCurrency,
+  language
 }) => {
+  const t = TRANSLATIONS[language];
   const [time, setTime] = useState(editingAlarm?.time || '07:00');
-  const [label, setLabel] = useState(editingAlarm?.label || 'Dậy đi làm làm giàu!');
+  const [label, setLabel] = useState(editingAlarm?.label || (language === 'vi' ? 'Dậy đi làm làm giàu!' : 'Time to conquer the world!'));
   const [currency, setCurrency] = useState<Currency>(editingAlarm?.currency || defaultCurrency);
   const [snoozeFee, setSnoozeFee] = useState<number>(
     editingAlarm?.snoozeFee || (currency === 'USD' ? 5 : 50000)
@@ -42,6 +55,9 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
 
   if (!isOpen) return null;
+
+  const dayLabels = language === 'vi' ? DAY_LABELS_VI : DAY_LABELS_EN;
+  const tones = language === 'vi' ? TONES_VI : TONES_EN;
 
   const toggleDay = (dayIndex: number) => {
     if (days.includes(dayIndex)) {
@@ -90,7 +106,7 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
               <DollarSign className="w-4 h-4" />
             </div>
             <h2 className="text-base font-bold text-white">
-              {editingAlarm ? 'Chỉnh Sửa Báo Thức' : 'Thêm Báo Thức Mới'}
+              {editingAlarm ? t.editAlarm : t.addAlarm}
             </h2>
           </div>
           <button
@@ -108,7 +124,7 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
           {/* Time Picker */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-              Giờ Báo Thức
+              {t.alarmTime}
             </label>
             <div className="flex justify-center">
               <input
@@ -124,23 +140,23 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
           {/* Label */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1.5">
-              Lý Do Phải Dậy
+              {t.reason}
             </label>
             <input
               type="text"
               value={label}
               onChange={e => setLabel(e.target.value)}
-              placeholder="VD: Dậy đi họp kẻo sếp trừ lương..."
+              placeholder={t.reasonPlaceholder}
               className="w-full bg-neutral-800 border border-neutral-700 focus:border-red-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition-all"
             />
           </div>
 
-          {/* Snooze Tax Rate - ENLARGED */}
+          {/* Snooze Tax Rate */}
           <div className="p-4 rounded-2xl bg-red-950/30 border border-red-500/30">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-extrabold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
                 <DollarSign className="w-4 h-4" />
-                Mức Phạt Quẹt Thẻ / Snooze
+                {t.taxRate}
               </span>
               <div className="flex bg-neutral-800 rounded-lg p-0.5 border border-neutral-700 text-xs">
                 <button
@@ -171,7 +187,7 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
             </div>
 
             <p className="text-[11px] text-neutral-300 mb-3">
-              Mỗi lần Bệ hạ bấm hoãn chuông 5 phút, thẻ Apple Pay sẽ quẹt trừ ngay số tiền này cho Nhà phát hành!
+              {t.taxDesc}
             </p>
 
             {/* Presets Chips */}
@@ -196,10 +212,10 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
           {/* Repeat Days */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-              Lặp Lại Hàng Tuần
+              {t.repeatWeekly}
             </label>
             <div className="grid grid-cols-7 gap-1.5">
-              {DAY_LABELS.map((dayLabel, index) => {
+              {dayLabels.map((dayLabel, index) => {
                 const isSelected = days.includes(index);
                 return (
                   <button
@@ -223,16 +239,16 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                Nhạc Chuông Báo Thức
+                {t.soundTone}
               </label>
               {isPlayingPreview && (
                 <span className="text-xs text-amber-400 animate-pulse flex items-center gap-1">
-                  <Volume2 className="w-3.5 h-3.5" /> Đang phát...
+                  <Volume2 className="w-3.5 h-3.5" /> Playing...
                 </span>
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {TONES.map(tone => (
+              {tones.map(tone => (
                 <div
                   key={tone.id}
                   onClick={() => setSoundTone(tone.id)}
@@ -279,9 +295,9 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
                 <Calculator className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white">Thử Thách Giải Toán Để Tắt</p>
+                <p className="text-xs font-bold text-white">{t.mathChallengeToggle}</p>
                 <p className="text-[10px] text-neutral-400">
-                  Giải 1 phép tính mới được tắt chuông miễn phí
+                  {t.mathChallengeSub}
                 </p>
               </div>
             </div>
@@ -306,14 +322,14 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
               }}
               className="flex-1 py-3 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs transition-all"
             >
-              Hủy
+              {t.cancel}
             </button>
             <button
               type="submit"
               className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 transition-all flex items-center justify-center gap-1.5"
             >
               <Check className="w-4 h-4" />
-              Lưu Báo Thức
+              {t.save}
             </button>
           </div>
         </form>

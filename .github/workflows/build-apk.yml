@@ -65,13 +65,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.2
-          name: "Snooze Tax v1.0.2 - CH Play AAB & APK Release"
+          tag_name: v1.0.3
+          name: "Snooze Tax v1.0.3 - Global Multi-Language & Fixed TTS"
           body: |
-            ⏰ **Snooze Tax (Nice Alarm) - Production Release**
+            ⏰ **Snooze Tax (Nice Alarm) - Production Release v1.0.3**
+            
+            Cập nhật mới:
+            - Chuyển đổi ngôn ngữ song ngữ Toàn Cầu (English / Tiếng Việt).
+            - Khắc phục triệt để lỗi giọng đọc AI TTS (Voice Fallback thông minh).
+            - Tối ưu giao diện Apple Pay Face ID cực mượt.
             
             Các file đính kèm:
-            - **`SnoozeTax-release.aab`**: File Bundle chính thức để upload thẳng lên Google Play Console!
+            - **`SnoozeTax-release.aab`**: File Bundle chính thức để upload lên Google Play Console!
             - **`SnoozeTax.apk`**: File cài đặt trực tiếp cho điện thoại Android.
             - **`snoozetax.jks`**: Khóa ký bảo mật ứng dụng (Keystore).
           files: |

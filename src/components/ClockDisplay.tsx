@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Zap, CreditCard } from 'lucide-react';
 import { Alarm } from '../types';
+import { Language, TRANSLATIONS } from '../services/i18n';
 
 interface ClockDisplayProps {
   alarms: Alarm[];
+  language: Language;
 }
 
-export const ClockDisplay: React.FC<ClockDisplayProps> = ({ alarms }) => {
+export const ClockDisplay: React.FC<ClockDisplayProps> = ({ alarms, language }) => {
   const [time, setTime] = useState(new Date());
+  const t = TRANSLATIONS[language];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -20,7 +23,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ alarms }) => {
   const minutes = time.getMinutes().toString().padStart(2, '0');
   const seconds = time.getSeconds().toString().padStart(2, '0');
 
-  const dateString = time.toLocaleDateString('vi-VN', {
+  const dateString = time.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -28,7 +31,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ alarms }) => {
   });
 
   const activeAlarms = alarms.filter(a => a.enabled);
-  let nextAlarmText = "Chưa có báo thức nào bật";
+  let nextAlarmText = language === 'vi' ? 'Chưa có báo thức nào bật' : 'No active alarms';
 
   if (activeAlarms.length > 0) {
     const currentTotalMinutes = time.getHours() * 60 + time.getMinutes();
@@ -49,7 +52,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ alarms }) => {
     if (nextAlarm) {
       const diffHours = Math.floor(minDiff / 60);
       const diffMinutes = minDiff % 60;
-      nextAlarmText = `Tiếp theo: ${(nextAlarm as Alarm).time} (còn ${diffHours > 0 ? `${diffHours}h ` : ''}${diffMinutes}p)`;
+      nextAlarmText = `${t.nextAlarm}: ${(nextAlarm as Alarm).time} (${diffHours > 0 ? `${diffHours}${t.leftHours} ` : ''}${diffMinutes}${t.leftMinutes})`;
     }
   }
 
@@ -81,8 +84,8 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ alarms }) => {
         {/* Big Apple Pay / Google Pay Highlight */}
         <div className="mt-4 pt-3.5 border-t border-neutral-800 flex items-center justify-center gap-2 text-xs font-bold text-amber-400">
           <CreditCard className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <span className="tracking-wide">
-            Cơ chế: Bấm Snooze = Quẹt Pay / GPay trừ $5 trực tiếp!
+          <span className="tracking-wide font-medium">
+            {t.bannerRule}
           </span>
         </div>
       </div>

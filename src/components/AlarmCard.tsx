@@ -1,19 +1,23 @@
 import React from 'react';
 import { Play, Trash2, Edit3, Calculator, Volume2 } from 'lucide-react';
 import { Alarm } from '../types';
+import { Language } from '../services/i18n';
 
 interface AlarmCardProps {
   alarm: Alarm;
+  language: Language;
   onToggle: (id: string) => void;
   onEdit: (alarm: Alarm) => void;
   onDelete: (id: string) => void;
   onTriggerNow: (alarm: Alarm) => void;
 }
 
-const DAY_NAMES = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const DAY_NAMES_VI = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const DAY_NAMES_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const AlarmCard: React.FC<AlarmCardProps> = ({
   alarm,
+  language,
   onToggle,
   onEdit,
   onDelete,
@@ -24,14 +28,15 @@ export const AlarmCard: React.FC<AlarmCardProps> = ({
       ? `$${alarm.snoozeFee}`
       : `${(alarm.snoozeFee / 1000).toFixed(0)}k đ`;
 
+  const dayNames = language === 'vi' ? DAY_NAMES_VI : DAY_NAMES_EN;
   const isEveryday = alarm.days.length === 7;
   const isWeekdays = alarm.days.length === 5 && !alarm.days.includes(0) && !alarm.days.includes(6);
 
-  let repeatSummary = 'Một lần';
-  if (isEveryday) repeatSummary = 'Mỗi ngày';
-  else if (isWeekdays) repeatSummary = 'T2 - T6';
+  let repeatSummary = language === 'vi' ? 'Một lần' : 'Once';
+  if (isEveryday) repeatSummary = language === 'vi' ? 'Mỗi ngày' : 'Every day';
+  else if (isWeekdays) repeatSummary = language === 'vi' ? 'T2 - T6' : 'Mon - Fri';
   else if (alarm.days.length > 0) {
-    repeatSummary = alarm.days.map(d => DAY_NAMES[d]).join(', ');
+    repeatSummary = alarm.days.map(d => dayNames[d]).join(', ');
   }
 
   return (
@@ -57,7 +62,7 @@ export const AlarmCard: React.FC<AlarmCardProps> = ({
 
             {/* Label */}
             <p className="text-sm font-medium text-neutral-200 mt-1 line-clamp-1">
-              {alarm.label || 'Báo thức'}
+              {alarm.label || (language === 'vi' ? 'Báo thức' : 'Alarm')}
             </p>
 
             {/* Badges */}
@@ -74,7 +79,7 @@ export const AlarmCard: React.FC<AlarmCardProps> = ({
               {alarm.mathChallenge && (
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-500/15 text-blue-300 border border-blue-500/30">
                   <Calculator className="w-3 h-3" />
-                  <span>Giải toán</span>
+                  <span>{language === 'vi' ? 'Giải toán' : 'Math check'}</span>
                 </span>
               )}
             </div>
@@ -101,21 +106,21 @@ export const AlarmCard: React.FC<AlarmCardProps> = ({
             className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-400 font-semibold transition-colors active:scale-95"
           >
             <Play className="w-3 h-3 fill-amber-400" />
-            <span>Thử Kêu</span>
+            <span>{language === 'vi' ? 'Thử Kêu' : 'Test Ring'}</span>
           </button>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => onEdit(alarm)}
               className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-              title="Chỉnh sửa"
+              title={language === 'vi' ? 'Chỉnh sửa' : 'Edit'}
             >
               <Edit3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(alarm.id)}
               className="p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-              title="Xóa"
+              title={language === 'vi' ? 'Xóa' : 'Delete'}
             >
               <Trash2 className="w-4 h-4" />
             </button>

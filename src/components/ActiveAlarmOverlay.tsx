@@ -12,6 +12,7 @@ import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/haptics';
 import { getRoastMessage } from '../services/roastService';
 import { PaymentSheet } from './PaymentSheet';
+import { TRANSLATIONS } from '../services/i18n';
 
 interface ActiveAlarmOverlayProps {
   alarm: Alarm;
@@ -32,6 +33,8 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
   const [showMathPrompt, setShowMathPrompt] = useState(false);
   const [mathAnswer, setMathAnswer] = useState('');
   const [mathError, setMathError] = useState(false);
+
+  const t = TRANSLATIONS[settings.language];
 
   // Generate random math problem if enabled
   const mathProblem = useMemo(() => {
@@ -143,13 +146,13 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
       <div className="w-full max-w-sm flex items-center justify-between pt-2">
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider animate-pulse">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-ping mr-1" />
-          <span>Báo thức đang reo</span>
+          <span>{t.alarmRinging}</span>
         </div>
 
         <button
           onClick={toggleMute}
           className="p-2.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white transition-colors"
-          title={isMuted ? 'Bật chuông' : 'Tắt tiếng tạm thời'}
+          title={isMuted ? 'Unmute' : 'Mute'}
         >
           {isMuted ? <VolumeX className="w-5 h-5 text-red-400" /> : <Volume2 className="w-5 h-5 text-amber-400" />}
         </button>
@@ -178,19 +181,19 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
         {/* HUGE EMPHASIS: THE SNOOZE TAX PRICE */}
         <div className="w-full py-4 px-5 rounded-3xl bg-red-950/40 border border-red-500/30 shadow-2xl backdrop-blur-md mb-2">
           <span className="text-xs uppercase tracking-widest text-red-400 font-bold block mb-1">
-            GIÁ CHUỘC GIẤC NGỦ
+            {t.snoozePrice}
           </span>
           <div className="text-4xl sm:text-5xl font-black text-amber-400 font-mono tracking-tight my-1">
-            {feeDisplay} <span className="text-xl text-neutral-400 font-normal">/ Lần</span>
+            {feeDisplay} <span className="text-xl text-neutral-400 font-normal">/ Snooze</span>
           </div>
           <p className="text-xs text-neutral-400 mt-1">
-            Quẹt thẻ Apple Pay / Google Pay tức thì để ngủ thêm 5 phút
+            {t.snoozeDesc}
           </p>
         </div>
 
         {sessionSnoozeCount > 0 && (
           <p className="text-xs font-semibold text-rose-400 mt-2">
-            Đã quẹt sáng nay: {sessionSnoozeCount} lần (-{alarm.currency === 'USD' ? `$${(sessionSnoozeCount * alarm.snoozeFee).toFixed(2)}` : `${(sessionSnoozeCount * alarm.snoozeFee).toLocaleString('vi-VN')} đ`})
+            {t.snoozedThisMorning}: {sessionSnoozeCount}x (-{alarm.currency === 'USD' ? `$${(sessionSnoozeCount * alarm.snoozeFee).toFixed(2)}` : `${(sessionSnoozeCount * alarm.snoozeFee).toLocaleString('vi-VN')} đ`})
           </p>
         )}
       </div>
@@ -203,7 +206,7 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
           className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-black text-lg tracking-wide shadow-2xl shadow-red-600/40 border-2 border-red-400 active:scale-95 transition-all flex items-center justify-center gap-2"
         >
           <span className="text-2xl font-normal leading-none"></span>
-          <span>SNOOZE (-{feeDisplay})</span>
+          <span>{t.snoozeBtn.replace('{fee}', feeDisplay)}</span>
         </button>
 
         {/* FREE Wake Up Button */}
@@ -212,7 +215,7 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
           className="w-full py-3.5 px-6 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white font-bold text-sm tracking-wide border border-neutral-800 active:scale-95 transition-all flex items-center justify-center gap-2"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>THỨC DẬY NGAY (MIỄN PHÍ)</span>
+          <span>{t.wakeUpBtn}</span>
         </button>
       </div>
 
@@ -222,7 +225,7 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
         onClose={() => setIsPaymentSheetOpen(false)}
         fee={alarm.snoozeFee}
         currency={alarm.currency}
-        beneficiaryName="Snooze Tax Inc. (Nhà Phát Hành)"
+        language={settings.language}
         onPaymentSuccess={handlePaymentSuccess}
       />
 
@@ -231,9 +234,9 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="w-full max-w-xs rounded-3xl bg-neutral-900 border border-neutral-700 p-6 text-center shadow-2xl animate-shake">
             <ShieldCheck className="w-10 h-10 text-sky-400 mx-auto mb-2" />
-            <h3 className="text-base font-bold text-white mb-1">Kiểm Tra Tỉnh Táo</h3>
+            <h3 className="text-base font-bold text-white mb-1">{t.mathChallengeTitle}</h3>
             <p className="text-xs text-neutral-400 mb-4">
-              Giải phép tính này để tắt chuông miễn phí:
+              {t.mathChallengeDesc}
             </p>
 
             <div className="text-3xl font-mono font-black text-amber-400 mb-4 bg-neutral-800 py-3 rounded-2xl border border-neutral-700">
@@ -246,7 +249,7 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
                 autoFocus
                 value={mathAnswer}
                 onChange={e => setMathAnswer(e.target.value)}
-                placeholder="Kết quả..."
+                placeholder="..."
                 className={`w-full text-center font-mono text-2xl font-bold py-2.5 rounded-xl bg-neutral-800 border-2 text-white outline-none ${
                   mathError ? 'border-red-500 animate-shake' : 'border-neutral-700'
                 }`}
@@ -258,13 +261,13 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
                   onClick={() => setShowMathPrompt(false)}
                   className="flex-1 py-2.5 rounded-xl bg-neutral-800 text-xs font-semibold text-neutral-300"
                 >
-                  Hủy
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
                 >
-                  Xác Nhận Dậy
+                  {t.confirmWakeUp}
                 </button>
               </div>
             </form>

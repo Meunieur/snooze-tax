@@ -6,9 +6,11 @@ import {
   Smartphone,
   Check,
   Mic,
-  Building2
+  Building2,
+  Globe
 } from 'lucide-react';
 import { AppSettings } from '../types';
+import { TRANSLATIONS } from '../services/i18n';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -28,6 +30,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
+  const t = TRANSLATIONS[localSettings.language];
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     onSaveSettings(localSettings);
@@ -44,8 +48,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Settings className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Cài Đặt Hệ Thống</h2>
-              <p className="text-xs text-neutral-400">Tùy biến tiền phạt & trải nghiệm</p>
+              <h2 className="text-base font-bold text-white">{t.settings}</h2>
+              <p className="text-xs text-neutral-400">{t.appSubtitle}</p>
             </div>
           </div>
           <button
@@ -57,10 +61,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <form onSubmit={handleSave} className="mt-5 space-y-4 text-xs">
+          {/* Language Selection */}
+          <div className="p-3.5 rounded-2xl bg-neutral-800/60 border border-neutral-800">
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-2 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-sky-400" />
+              Language / Ngôn Ngữ
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setLocalSettings({ ...localSettings, language: 'en', currency: 'USD' })}
+                className={`py-2 px-3 rounded-xl font-bold border transition-all text-center ${
+                  localSettings.language === 'en'
+                    ? 'bg-red-500 text-white border-red-400 shadow-md'
+                    : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                }`}
+              >
+                English (Global USD)
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocalSettings({ ...localSettings, language: 'vi', currency: 'VND' })}
+                className={`py-2 px-3 rounded-xl font-bold border transition-all text-center ${
+                  localSettings.language === 'vi'
+                    ? 'bg-red-500 text-white border-red-400 shadow-md'
+                    : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                }`}
+              >
+                Tiếng Việt (VND)
+              </button>
+            </div>
+          </div>
+
           {/* Currency Selection */}
           <div className="p-3.5 rounded-2xl bg-neutral-800/60 border border-neutral-800">
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-2">
-              Đơn Vị Tiền Tệ Mặc Định
+              {t.currencyDefault}
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -72,7 +108,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     : 'bg-neutral-800 text-neutral-400 border-neutral-700'
                 }`}
               >
-                USD ($) — $5 / Lần
+                USD ($) — $5 / Snooze
               </button>
               <button
                 type="button"
@@ -88,19 +124,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Publisher Beneficiary Notice (Hài hước chuẩn Meme) */}
+          {/* Publisher Beneficiary Notice */}
           <div className="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30">
             <div className="flex items-center gap-2 mb-1">
               <Building2 className="w-4 h-4 text-amber-400" />
               <span className="font-bold text-amber-300 uppercase tracking-wider text-[11px]">
-                Đơn Vị Thụ Hưởng Tiền Phạt
+                {t.publisherNoticeHeader}
               </span>
             </div>
             <p className="text-white font-extrabold text-xs">
-              Snooze Tax Inc. (Nhà Phát Hành Ứng Dụng)
+              Snooze Tax Inc.
             </p>
             <p className="text-neutral-400 text-[11px] mt-1 leading-relaxed">
-              Mỗi lần Bệ hạ bấm hoãn chuông 5 phút, $5 sẽ được thanh toán trực tiếp cho Nhà phát hành để tài trợ cà phê và làm giàu cho lập trình viên!
+              {t.publisherNoticeDesc}
             </p>
           </div>
 
@@ -108,7 +144,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="p-3.5 rounded-2xl bg-neutral-800/60 border border-neutral-800">
             <div className="flex items-center justify-between mb-1.5">
               <span className="font-bold text-neutral-300 flex items-center gap-1.5">
-                <Volume2 className="w-4 h-4 text-amber-400" /> Âm Lượng Báo Thức
+                <Volume2 className="w-4 h-4 text-amber-400" /> {t.volume}
               </span>
               <span className="font-mono text-amber-400 font-bold">
                 {Math.round(localSettings.soundVolume * 100)}%
@@ -132,9 +168,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="flex items-center gap-2">
               <Mic className="w-4 h-4 text-purple-400" />
               <div>
-                <p className="font-bold text-white">Giọng Nói Châm Biếm (TTS Voice)</p>
+                <p className="font-bold text-white">{t.voiceRoast}</p>
                 <p className="text-[11px] text-neutral-400">
-                  Phát âm thanh cảm ơn đã tài trợ tiền cho app mỗi khi Snooze
+                  {t.voiceRoastDesc}
                 </p>
               </div>
             </div>
@@ -156,14 +192,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="flex items-center justify-between mb-1.5">
               <span className="font-bold text-neutral-300 flex items-center gap-1.5">
                 <Smartphone className="w-4 h-4 text-sky-400" />
-                Cài Đặt Cho iOS & Android
+                iOS & Android Native PWA
               </span>
               <button
                 type="button"
                 onClick={() => setShowInstallGuide(!showInstallGuide)}
                 className="text-xs text-sky-400 hover:text-sky-300 font-semibold"
               >
-                {showInstallGuide ? 'Ẩn' : 'Xem'}
+                {showInstallGuide ? (localSettings.language === 'vi' ? 'Ẩn' : 'Hide') : (localSettings.language === 'vi' ? 'Xem' : 'Guide')}
               </button>
             </div>
 
@@ -172,14 +208,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="bg-black/60 p-2.5 rounded-xl border border-neutral-800">
                   <strong className="text-white">📱 iPhone / iPad (iOS):</strong>
                   <p className="text-neutral-400 mt-0.5">
-                    Mở Safari ➔ Bấm Share ➔ Chọn <strong>"Thêm vào Màn hình chính" (Add to Home Screen)</strong>.
+                    Safari ➔ Share ➔ <strong>"Add to Home Screen"</strong>.
                   </p>
                 </div>
 
                 <div className="bg-black/60 p-2.5 rounded-xl border border-neutral-800">
-                  <strong className="text-white">🤖 Điện thoại Android:</strong>
+                  <strong className="text-white">🤖 Android:</strong>
                   <p className="text-neutral-400 mt-0.5">
-                    Mở Chrome ➔ Menu 3 chấm ➔ Chọn <strong>"Cài đặt ứng dụng"</strong>.
+                    Chrome ➔ 3 dots ➔ <strong>"Install app"</strong>.
                   </p>
                 </div>
               </div>
@@ -193,14 +229,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onClick={onClose}
               className="flex-1 py-3 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs transition-all"
             >
-              Hủy
+              {t.cancel}
             </button>
             <button
               type="submit"
               className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 transition-all flex items-center justify-center gap-1.5"
             >
               <Check className="w-4 h-4" />
-              Lưu Cài Đặt
+              {t.save}
             </button>
           </div>
         </form>
