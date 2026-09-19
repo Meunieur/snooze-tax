@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Snooze Tax - Báo Thức Phạt Tiền</string>
+    <string name="title_activity_main">Snooze Tax - Báo Thức Phạt Tiền</string>
+    <string name="package_name">com.snoozetax.nicealarm</string>
+    <string name="custom_url_scheme">com.snoozetax.nicealarm</string>
+</resources>

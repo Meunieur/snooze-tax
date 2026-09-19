@@ -1,0 +1,16 @@
+{
+  "short_name": "SnoozeTax",
+  "name": "Snooze Tax — Báo Thức Trừ Tiền",
+  "icons": [
+    {
+      "src": "/alarm-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0F172A",
+  "theme_color": "#EF4444",
+  "display": "standalone",
+  "orientation": "portrait"
+}
