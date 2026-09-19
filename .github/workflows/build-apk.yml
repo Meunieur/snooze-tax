@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -28,10 +30,10 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Build Debug APK
@@ -39,9 +41,24 @@ jobs:
           cd android
           chmod +x ./gradlew
           ./gradlew assembleDebug --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk ../SnoozeTax.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SnoozeTax-Debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: SnoozeTax-APK
+          path: SnoozeTax.apk
+
+      - name: Create GitHub Release with APK
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "Snooze Tax v1.0.0 - Android APK"
+          body: |
+            ⏰ **Snooze Tax - Báo Thức Phạt Tiền Quẹt Thẻ Apple Pay / Google Pay**
+            
+            Tải file `SnoozeTax.apk` bên dưới cài trực tiếp vào điện thoại Android để trải nghiệm cảm giác bị trừ $5 mỗi lần ngủ nướng!
+          files: SnoozeTax.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
