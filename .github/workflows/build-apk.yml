@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK & AAB
 
 on:
   push:
@@ -36,33 +36,47 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Build Debug APK
+      - name: Generate Release Keystore
+        run: |
+          cd android/app
+          if [ ! -f snoozetax.jks ]; then
+            keytool -genkey -v -keystore snoozetax.jks -alias snoozetax -keyalg RSA -keysize 2048 -validity 10000 -storepass snoozetax123 -keypass snoozetax123 -dname "CN=SnoozeTax, OU=Dev, O=SnoozeTax, L=HN, S=HN, C=VN"
+          fi
+
+      - name: Build Android Bundle & APK
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew assembleDebug --stacktrace
-          cp app/build/outputs/apk/debug/app-debug.apk ../SnoozeTax.apk
+          ./gradlew bundleRelease assembleRelease --stacktrace
+          cp app/build/outputs/bundle/release/app-release.aab ../SnoozeTax-release.aab
+          cp app/build/outputs/apk/release/app-release.apk ../SnoozeTax.apk
+          cp app/snoozetax.jks ../snoozetax.jks
 
-      - name: Upload APK Artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: SnoozeTax-APK
-          path: SnoozeTax.apk
+          name: SnoozeTax-Release-Files
+          path: |
+            SnoozeTax-release.aab
+            SnoozeTax.apk
+            snoozetax.jks
 
-      - name: Create GitHub Release with APK
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.1
-          name: "Snooze Tax v1.0.1 - Android APK"
+          tag_name: v1.0.2
+          name: "Snooze Tax v1.0.2 - CH Play AAB & APK Release"
           body: |
-            ⏰ **Snooze Tax - Báo Thức Phạt Tiền Quẹt Thẻ Apple Pay / Google Pay**
+            ⏰ **Snooze Tax (Nice Alarm) - Production Release**
             
-            Phiên bản v1.0.1:
-            - Tích hợp tài khoản Techcombank chính chủ (TRAN MINH TRI - 1903 3832 3460 19).
-            - Giao diện siêu tinh giản, mô phỏng Apple Pay Face ID cực mượt.
-            
-            Tải file `SnoozeTax.apk` bên dưới cài trực tiếp vào điện thoại Android!
-          files: SnoozeTax.apk
+            Các file đính kèm:
+            - **`SnoozeTax-release.aab`**: File Bundle chính thức để upload thẳng lên Google Play Console!
+            - **`SnoozeTax.apk`**: File cài đặt trực tiếp cho điện thoại Android.
+            - **`snoozetax.jks`**: Khóa ký bảo mật ứng dụng (Keystore).
+          files: |
+            SnoozeTax-release.aab
+            SnoozeTax.apk
+            snoozetax.jks
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
