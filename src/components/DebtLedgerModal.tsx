@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   X,
   CreditCard,
@@ -9,10 +9,13 @@ import {
   Calendar,
   Share2,
   Check,
-  Receipt
+  Receipt,
+  QrCode,
+  Copy
 } from 'lucide-react';
 import { Currency, SnoozeRecord, UserStats } from '../types';
 import { getEquivalentItem, getSlothTitle } from '../services/roastService';
+import { generateVietQRUrl, OFFICIAL_DEVELOPER_BANK } from '../services/vietqr';
 
 interface DebtLedgerModalProps {
   isOpen: boolean;
@@ -31,7 +34,9 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
   currency,
   onResetLedger
 }) => {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [copiedSTK, setCopiedSTK] = useState(false);
 
   if (!isOpen) return null;
 
@@ -44,12 +49,33 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
   const itemEquivalent = getEquivalentItem(totalPenalty, currency);
   const slothRank = getSlothTitle(stats.totalSnoozeCount);
 
+  const transferAmount =
+    currency === 'USD'
+      ? Math.max(50000, totalPenalty * 25000)
+      : Math.max(50000, totalPenalty);
+
+  const qrUrl = generateVietQRUrl(
+    OFFICIAL_DEVELOPER_BANK.bankBin,
+    OFFICIAL_DEVELOPER_BANK.accountNumber,
+    transferAmount,
+    'Snooze Tax Tien Phat',
+    OFFICIAL_DEVELOPER_BANK.accountName
+  );
+
   const handleShareReceipt = () => {
     const text = `Sổ nợ Snooze Tax của tôi:\n💳 Đã quẹt thẻ Apple Pay: ${displayTotal} cho ${stats.totalSnoozeCount} lần ngủ ráng!\n🏆 Danh hiệu: ${slothRank.title}\n🧋 Tương đương: ${itemEquivalent}\nBáo thức quẹt thẻ trị dứt điểm lười!`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCopySTK = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(OFFICIAL_DEVELOPER_BANK.accountNumber);
+      setCopiedSTK(true);
+      setTimeout(() => setCopiedSTK(false), 2000);
     }
   };
 
@@ -82,7 +108,7 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
           </div>
 
           <span className="text-xs font-bold uppercase tracking-widest text-red-400">
-            Tổng Tiền Đã Cúng Cho Nhà Phát Hành App
+            Tổng Tiền Đã Cúng Cho Nhà Phát Hành
           </span>
 
           <div className="text-5xl font-black font-mono tracking-tight text-white my-2 drop-shadow-md">
@@ -90,7 +116,7 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
           </div>
 
           <p className="text-[11px] text-neutral-400 mt-1 mb-2">
-            Đơn vị thụ hưởng: <strong className="text-amber-400">Snooze Tax Inc.</strong> (Tiệm Bán Giấc Ngủ)
+            Đơn vị thụ hưởng: <strong className="text-amber-400">{OFFICIAL_DEVELOPER_BANK.accountName}</strong> (Techcombank)
           </p>
 
           {/* Sloth Rank Badge */}
@@ -108,6 +134,47 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Action button: Pay real money to Admin */}
+        <div className="mt-4">
+          <button
+            onClick={() => setShowQR(!showQR)}
+            className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
+          >
+            <QrCode className="w-4 h-4" />
+            <span>{showQR ? 'Ẩn Mã VietQR' : 'Quét VietQR Trả Tiền Thật Cho Dev (TRAN MINH TRI)'}</span>
+          </button>
+        </div>
+
+        {/* VietQR Popup Area */}
+        {showQR && (
+          <div className="mt-3 p-4 rounded-2xl bg-neutral-950 border border-emerald-500/40 text-center animate-fade-in">
+            <p className="text-xs text-neutral-300 mb-2">
+              Quét mã chuyển tiền thẳng vào tài khoản của Admin:
+            </p>
+            <div className="bg-white p-2 rounded-2xl inline-block mx-auto mb-2 shadow-md">
+              <img
+                src={qrUrl}
+                alt="VietQR Dev"
+                className="w-48 h-48 object-contain rounded"
+              />
+            </div>
+            <div className="text-[11px] text-neutral-400 space-y-1 mb-3">
+              <p>Ngân hàng: <strong className="text-white">Techcombank</strong></p>
+              <p>Chủ tài khoản: <strong className="text-white">{OFFICIAL_DEVELOPER_BANK.accountName}</strong></p>
+              <div className="flex items-center justify-center gap-1.5 font-mono text-emerald-400 font-bold">
+                <span>STK: {OFFICIAL_DEVELOPER_BANK.accountNumber}</span>
+                <button
+                  onClick={handleCopySTK}
+                  className="p-1 rounded bg-neutral-800 text-neutral-300 hover:text-white"
+                  title="Copy STK"
+                >
+                  {copiedSTK ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-3 gap-2.5 my-4 text-center">
@@ -144,7 +211,7 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
               <CreditCard className="w-3.5 h-3.5" />
-              Lịch Sử Giao Dịch Gần Đây ({records.length})
+              Lịch Sử Giao Dịch ({records.length})
             </h3>
           </div>
 

@@ -53,12 +53,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.0
-          name: "Snooze Tax v1.0.0 - Android APK"
+          tag_name: v1.0.1
+          name: "Snooze Tax v1.0.1 - Android APK"
           body: |
             ⏰ **Snooze Tax - Báo Thức Phạt Tiền Quẹt Thẻ Apple Pay / Google Pay**
             
-            Tải file `SnoozeTax.apk` bên dưới cài trực tiếp vào điện thoại Android để trải nghiệm cảm giác bị trừ $5 mỗi lần ngủ nướng!
+            Phiên bản v1.0.1:
+            - Tích hợp tài khoản Techcombank chính chủ (TRAN MINH TRI - 1903 3832 3460 19).
+            - Giao diện siêu tinh giản, mô phỏng Apple Pay Face ID cực mượt.
+            
+            Tải file `SnoozeTax.apk` bên dưới cài trực tiếp vào điện thoại Android!
           files: SnoozeTax.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
