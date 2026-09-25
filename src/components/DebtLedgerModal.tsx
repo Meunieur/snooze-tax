@@ -11,12 +11,14 @@ import {
   Check,
   Receipt,
   QrCode,
-  Copy
+  Copy,
+  Info
 } from 'lucide-react';
 import { Currency, SnoozeRecord, UserStats } from '../types';
 import { getEquivalentItem, getSlothTitle } from '../services/roastService';
 import { generateVietQRUrl, OFFICIAL_DEVELOPER_BANK } from '../services/vietqr';
 import { Language, TRANSLATIONS } from '../services/i18n';
+import { getPaymentBrandInfo, isAndroid, isIOS } from '../services/platform';
 
 interface DebtLedgerModalProps {
   isOpen: boolean;
@@ -27,6 +29,8 @@ interface DebtLedgerModalProps {
   language: Language;
   onResetLedger: () => void;
 }
+
+const EXCHANGE_RATE = 25000;
 
 export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
   isOpen,
@@ -44,19 +48,29 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
   if (!isOpen) return null;
 
   const t = TRANSLATIONS[language];
-  const totalPenalty = currency === 'USD' ? stats.totalPenaltyUSD : stats.totalPenaltyVND;
-  const displayTotal =
-    currency === 'USD'
-      ? `$${totalPenalty.toFixed(2)}`
-      : `${totalPenalty.toLocaleString('vi-VN')} đ`;
+  const isUSD = currency === 'USD';
+  const brand = getPaymentBrandInfo();
 
-  const itemEquivalent = getEquivalentItem(totalPenalty, currency);
-  const slothRank = getSlothTitle(stats.totalSnoozeCount);
+  // Tính tổng nợ toàn diện (quy đổi thống nhất nếu người dùng có cả nợ USD và VND)
+  const totalInSelectedCurrency = isUSD
+    ? stats.totalPenaltyUSD + (stats.totalPenaltyVND / EXCHANGE_RATE)
+    : stats.totalPenaltyVND + (stats.totalPenaltyUSD * EXCHANGE_RATE);
 
-  const transferAmount =
-    currency === 'USD'
-      ? Math.max(50000, totalPenalty * 25000)
-      : Math.max(50000, totalPenalty);
+  const displayTotal = isUSD
+    ? `$${totalInSelectedCurrency.toFixed(2)}`
+    : `${Math.round(totalInSelectedCurrency).toLocaleString('vi-VN')} đ`;
+
+  const hasMixedCurrencies = stats.totalPenaltyUSD > 0 && stats.totalPenaltyVND > 0;
+
+  const itemEquivalent = getEquivalentItem(totalInSelectedCurrency, currency);
+  const totalSnoozes = Math.max(stats.totalSnoozeCount, records.length);
+  const slothRank = getSlothTitle(totalSnoozes);
+
+  // Mức chuyển khoản VietQR quy đổi sang VND (tối thiểu 50k)
+  const transferAmount = Math.max(
+    50000,
+    isUSD ? Math.round(totalInSelectedCurrency * EXCHANGE_RATE) : Math.round(totalInSelectedCurrency)
+  );
 
   const qrUrl = generateVietQRUrl(
     OFFICIAL_DEVELOPER_BANK.bankBin,
@@ -68,8 +82,8 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
 
   const handleShareReceipt = () => {
     const text = language === 'vi'
-      ? `Sổ nợ Snooze Tax của tôi:\n💳 Đã quẹt thẻ Apple Pay: ${displayTotal} cho ${stats.totalSnoozeCount} lần ngủ ráng!\n🏆 Danh hiệu: ${slothRank.title}\n🧋 Tương đương: ${itemEquivalent}\nBáo thức quẹt thẻ trị dứt điểm lười!`
-      : `My Snooze Tax Debt Receipt:\n💳 Charged via Pay: ${displayTotal} across ${stats.totalSnoozeCount} snooze hits!\n🏆 Shame Title: ${slothRank.title}\n☕ Equivalent to: ${itemEquivalent}\nThe alarm clock that bills your laziness!`;
+      ? `Sổ nợ Snooze Tax của tôi:\n💳 Đã quẹt thẻ ${brand.name}: ${displayTotal} cho ${totalSnoozes} lần ngủ ráng!\n🏆 Danh hiệu: ${slothRank.title}\n☕ Tương đương: ${itemEquivalent}\nBáo thức quẹt thẻ trị dứt điểm lười!`
+      : `My Snooze Tax Debt Receipt:\n💳 Charged via ${brand.name}: ${displayTotal} across ${totalSnoozes} snooze hits!\n🏆 Shame Title: ${slothRank.title}\n☕ Equivalent to: ${itemEquivalent}\nThe alarm clock that bills your laziness!`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
@@ -121,6 +135,14 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
           <div className="text-5xl font-black font-mono tracking-tight text-white my-2 drop-shadow-md">
             {displayTotal}
           </div>
+
+          {hasMixedCurrencies && (
+            <p className="text-[11px] text-amber-400/90 font-mono mb-1">
+              {language === 'vi'
+                ? `(Bao gồm: ${stats.totalPenaltyVND.toLocaleString('vi-VN')} đ + $${stats.totalPenaltyUSD.toFixed(2)} quy đổi)`
+                : `(Includes: $${stats.totalPenaltyUSD.toFixed(2)} + ${stats.totalPenaltyVND.toLocaleString('vi-VN')} VND converted)`}
+            </p>
+          )}
 
           <p className="text-[11px] text-neutral-400 mt-1 mb-2">
             {t.beneficiaryNotice}
@@ -187,7 +209,7 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
         <div className="grid grid-cols-3 gap-2.5 my-4 text-center">
           <div className="p-3 rounded-2xl bg-neutral-800/60 border border-neutral-700/60">
             <div className="text-xl font-mono font-black text-red-400">
-              {stats.totalSnoozeCount}
+              {totalSnoozes}
             </div>
             <div className="text-[10px] text-neutral-400 uppercase font-semibold mt-0.5">
               {t.timesSnoozed}
@@ -220,6 +242,11 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
               <CreditCard className="w-3.5 h-3.5" />
               {t.recentTransactions} ({records.length})
             </h3>
+            {records.length > 0 && (
+              <span className="text-[10px] text-neutral-500">
+                {language === 'vi' ? 'Mới nhất ở trên' : 'Newest first'}
+              </span>
+            )}
           </div>
 
           {records.length === 0 ? (
@@ -227,18 +254,35 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
               {t.noTransactions}
             </div>
           ) : (
-            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-              {records.slice(-10).reverse().map((rec) => {
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {[...records].reverse().map((rec) => {
                 const recDate = new Date(rec.timestamp).toLocaleString(language === 'vi' ? 'vi-VN' : 'en-US', {
                   day: '2-digit',
                   month: '2-digit',
                   hour: '2-digit',
                   minute: '2-digit'
                 });
-                const feeText =
-                  rec.currency === 'USD'
-                    ? `-$${rec.fee.toFixed(2)}`
-                    : `-${(rec.fee / 1000).toFixed(0)}k đ`;
+
+                const isRecUSD = rec.currency === 'USD';
+                const originalFeeText = isRecUSD
+                  ? `-$${rec.fee.toFixed(2)}`
+                  : `-${rec.fee.toLocaleString('vi-VN')} đ`;
+
+                let conversionHint = '';
+                if (!isUSD && isRecUSD) {
+                  conversionHint = `~${(rec.fee * EXCHANGE_RATE).toLocaleString('vi-VN')} đ`;
+                } else if (isUSD && !isRecUSD) {
+                  conversionHint = `~$${(rec.fee / EXCHANGE_RATE).toFixed(2)}`;
+                }
+
+                // Nhãn badge thanh toán phù hợp nền tảng và record
+                const badgeLabel = isAndroid
+                  ? 'GPay'
+                  : isIOS
+                  ? 'Pay'
+                  : isRecUSD
+                  ? 'Pay'
+                  : 'GPay';
 
                 return (
                   <div
@@ -248,8 +292,8 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
                     <div>
                       <div className="flex items-center gap-1.5 font-semibold text-neutral-200">
                         <span>{rec.alarmLabel}</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-red-500/20 text-red-400 font-bold font-mono">
-                          Pay
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold font-mono">
+                          {badgeLabel}
                         </span>
                       </div>
                       <p className="text-[11px] text-neutral-400 italic mt-0.5">
@@ -261,9 +305,16 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
                       </div>
                     </div>
 
-                    <span className="font-mono font-bold text-red-400 text-sm whitespace-nowrap">
-                      {feeText}
-                    </span>
+                    <div className="text-right whitespace-nowrap">
+                      <span className="font-mono font-bold text-red-400 text-sm block">
+                        {originalFeeText}
+                      </span>
+                      {conversionHint && (
+                        <span className="font-mono text-[10px] text-neutral-500 block mt-0.5">
+                          {conversionHint}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -271,8 +322,18 @@ export const DebtLedgerModal: React.FC<DebtLedgerModalProps> = ({
           )}
         </div>
 
+        {/* Google Play / App Store Disclaimer */}
+        <div className="mt-4 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800/70 flex items-start gap-2 text-[10px] text-neutral-400 leading-relaxed">
+          <Info className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0 mt-0.5" />
+          <p>
+            {language === 'vi'
+              ? 'Lưu ý: Đây là ứng dụng rèn luyện kỷ luật thức dậy mang tính giải trí. Các khoản quẹt thẻ nợ trên màn hình là mô phỏng tâm lý, ứng dụng không tự ý trừ tiền từ tài khoản thẻ của bạn.'
+              : 'Notice: This is an entertaining morning discipline alarm. Simulated card charges are for psychological motivation; the app does not automatically debit your actual bank accounts.'}
+          </p>
+        </div>
+
         {/* Footer Actions */}
-        <div className="mt-5 pt-4 border-t border-neutral-800 flex gap-2">
+        <div className="mt-4 pt-3 border-t border-neutral-800 flex gap-2">
           <button
             onClick={handleShareReceipt}
             className="flex-1 py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all"

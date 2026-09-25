@@ -25,10 +25,15 @@ export const Header: React.FC<HeaderProps> = ({
   onTriggerTestAlarm
 }) => {
   const t = TRANSLATIONS[language];
-  const displayPenalty =
-    currency === 'USD'
-      ? `$${totalPenaltyUSD.toFixed(2)}`
-      : `${totalPenaltyVND.toLocaleString('vi-VN')} đ`;
+  const isUSD = currency === 'USD';
+  const EXCHANGE_RATE = 25000;
+  const totalInSelectedCurrency = isUSD
+    ? totalPenaltyUSD + (totalPenaltyVND / EXCHANGE_RATE)
+    : totalPenaltyVND + (totalPenaltyUSD * EXCHANGE_RATE);
+
+  const displayPenalty = isUSD
+    ? `$${totalInSelectedCurrency.toFixed(2)}`
+    : `${Math.round(totalInSelectedCurrency).toLocaleString('vi-VN')} đ`;
 
   return (
     <header className="sticky top-0 z-30 w-full bg-neutral-950/90 backdrop-blur-md border-b border-neutral-800/80 px-4 py-3">

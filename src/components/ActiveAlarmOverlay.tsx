@@ -5,7 +5,8 @@ import {
   CheckCircle2,
   Volume2,
   VolumeX,
-  ShieldCheck
+  ShieldCheck,
+  CreditCard
 } from 'lucide-react';
 import { Alarm, AppSettings } from '../types';
 import { soundEngine } from '../services/soundEngine';
@@ -13,6 +14,7 @@ import { triggerHaptic } from '../services/haptics';
 import { getRoastMessage } from '../services/roastService';
 import { PaymentSheet } from './PaymentSheet';
 import { TRANSLATIONS } from '../services/i18n';
+import { isIOS } from '../services/platform';
 
 interface ActiveAlarmOverlayProps {
   alarm: Alarm;
@@ -205,7 +207,11 @@ export const ActiveAlarmOverlay: React.FC<ActiveAlarmOverlayProps> = ({
           onClick={handleOpenPaymentSheet}
           className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-black text-lg tracking-wide shadow-2xl shadow-red-600/40 border-2 border-red-400 active:scale-95 transition-all flex items-center justify-center gap-2"
         >
-          <span className="text-2xl font-normal leading-none"></span>
+          {isIOS ? (
+            <span className="text-2xl font-normal leading-none"></span>
+          ) : (
+            <CreditCard className="w-5 h-5 flex-shrink-0" />
+          )}
           <span>{t.snoozeBtn.replace('{fee}', feeDisplay)}</span>
         </button>
 

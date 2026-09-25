@@ -36,10 +36,12 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Generate Release Keystore
+      - name: Setup Release Keystore
         run: |
           cd android/app
-          if [ ! -f snoozetax.jks ]; then
+          if [ -f ../../snoozetax.jks ]; then
+            cp ../../snoozetax.jks ./snoozetax.jks
+          elif [ ! -f snoozetax.jks ]; then
             keytool -genkey -v -keystore snoozetax.jks -alias snoozetax -keyalg RSA -keysize 2048 -validity 10000 -storepass snoozetax123 -keypass snoozetax123 -dname "CN=SnoozeTax, OU=Dev, O=SnoozeTax, L=HN, S=HN, C=VN"
           fi
 
@@ -65,8 +67,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.3
-          name: "Snooze Tax v1.0.3 - Global Multi-Language & Fixed TTS"
+          tag_name: v1.0.4
+          name: "Snooze Tax v1.0.4 - Target Android 16 (API 36) & Closed Beta Release"
           body: |
             ⏰ **Snooze Tax (Nice Alarm) - Production Release v1.0.3**
             

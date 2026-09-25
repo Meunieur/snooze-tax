@@ -1,25 +1,25 @@
 import { Currency } from '../types';
 
 export const ROAST_MESSAGES_VI = [
-  "Cảm ơn Bệ hạ đã hào phóng cúng $5 cho nhà phát hành app để ngủ tiếp!",
+  "Cảm ơn Bệ hạ đã hào phóng cúng {fee} cho nhà phát hành app để ngủ tiếp!",
   "Chúc mừng! Đội ngũ lập trình viên vừa được bạn mời thêm một ly cà phê xịn.",
-  "Quẹt thẻ thành công! Tiền đã vào túi dev, chúc bạn tiếp tục ngáy khò khò.",
-  "Bấm Snooze nhanh như chớp! Đúng là người giàu, $5 với bạn chỉ là hạt cát.",
-  "Báo thức: 'Đã nhận $5, hợp đồng ngủ thêm 5 phút bắt đầu có hiệu lực!'",
+  "Quẹt thẻ thành công! Tiền đã vào ví dev, chúc bạn tiếp tục ngáy khò khò.",
+  "Bấm Snooze nhanh như chớp! Đúng là đại gia, {fee} với bạn chỉ là hạt cát.",
+  "Báo thức: 'Đã nhận {fee}, hợp đồng ngủ thêm 5 phút bắt đầu có hiệu lực!'",
   "Bạn vừa mua 5 phút ngủ với mức giá đắt ngang khách sạn 5 sao Dubai.",
   "Cứ đà ngủ này thì bạn sắp nuôi sống cả công ty làm app báo thức rồi đấy!",
   "Ngủ thêm 5 phút không giúp bạn trẻ ra, nhưng chắc chắn làm nhà phát hành giàu lên.",
   "Thôi dậy đi đại gia ơi, tiền quẹt thẻ nãy giờ đủ mua cổ phần công ty rồi!",
-  "Chiếc giường này rất êm ái, và hóa đơn Apple Pay thì cực kỳ thực tế."
+  "Chiếc giường này rất êm ái, và hóa đơn thanh toán thì cực kỳ thực tế."
 ];
 
 export const ROAST_MESSAGES_EN = [
-  "Cha-ching! 5 more minutes of sleep just cost you a fancy coffee.",
+  "Cha-ching! 5 more minutes of sleep just cost you {fee}.",
   "You snooze, you literally lose. Your bank balance just shed tears!",
   "Congratulations, you are officially the most expensive sleeper in town.",
   "Paid in full! Sweet dreams sponsored by your poor wallet.",
   "Sleep is free, but snoozing is a luxury subscription only you can afford.",
-  "Another $5 into the sloth fund. Your future self is judging you.",
+  "Another {fee} into the sloth fund. Your future self is judging you.",
   "That snooze button is the most profitable scam in history!",
   "Keep hitting snooze and you'll have to mortgage your bed."
 ];
@@ -29,15 +29,25 @@ export const getRoastMessage = (lang: 'vi' | 'en', snoozeCount: number, fee: num
   const randomIndex = Math.floor(Math.random() * list.length);
   const base = list[randomIndex];
 
+  const feeDisplay =
+    currency === 'USD'
+      ? `$${fee.toFixed(2)}`
+      : `${fee.toLocaleString('vi-VN')} đ`;
+
+  const totalFeeDisplay =
+    currency === 'USD'
+      ? `$${(snoozeCount * fee).toFixed(2)}`
+      : `${(snoozeCount * fee).toLocaleString('vi-VN')} đ`;
+
   if (snoozeCount >= 3) {
     if (lang === 'vi') {
-      return `Lần bấm thứ ${snoozeCount} rồi! Bạn đã nướng tổng cộng ${snoozeCount * fee} ${currency === 'VND' ? 'đ' : '$'}. Dậy ngay kẻo nghèo!`;
+      return `Lần bấm thứ ${snoozeCount} rồi! Bạn đã nướng tổng cộng ${totalFeeDisplay}. Dậy ngay kẻo nghèo!`;
     } else {
-      return `Snooze #${snoozeCount}! You have literally burned ${snoozeCount * fee} ${currency}. Get out of bed now!`;
+      return `Snooze #${snoozeCount}! You have literally burned ${totalFeeDisplay}. Get out of bed now!`;
     }
   }
 
-  return base;
+  return base.replace(/{fee}/g, feeDisplay);
 };
 
 export const getEquivalentItem = (totalAmount: number, currency: Currency): string => {
@@ -49,10 +59,11 @@ export const getEquivalentItem = (totalAmount: number, currency: Currency): stri
     return "1 chiếc Apple Watch";
   } else {
     // VND
-    if (totalAmount < 50000) return "1 bát phở bò tái lăn nóng hổi";
-    if (totalAmount < 120000) return "2 ly trà sữa nướng trân châu";
-    if (totalAmount < 300000) return "1 bữa buffet lẩu nướng thả ga";
-    if (totalAmount < 700000) return "1 chiếc bàn phím cơ gõ êm tai";
+    if (totalAmount < 50000) return "1 ly cà phê muối thơm béo";
+    if (totalAmount < 100000) return "1 bát phở bò đặc biệt kèm quẩy giòn";
+    if (totalAmount < 200000) return "3 ly trà sữa full topping size L";
+    if (totalAmount < 400000) return "1 vé buffet lẩu nướng hải sản";
+    if (totalAmount < 800000) return "1 chiếc bàn phím cơ gõ êm tai";
     if (totalAmount < 2000000) return "1 vé máy bay khứ hồi Đà Nẵng";
     return "Nửa chỉ vàng 9999 PNJ";
   }

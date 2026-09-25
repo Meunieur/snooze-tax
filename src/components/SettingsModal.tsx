@@ -187,12 +187,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </label>
           </div>
 
-          {/* App Platform & Native Installation Info */}
-          <div className="p-3.5 rounded-2xl bg-neutral-800/40 border border-neutral-800">
-            <div className="flex items-center justify-between mb-1.5">
+          {/* App Platform & Privacy Policy */}
+          <div className="p-3.5 rounded-2xl bg-neutral-800/40 border border-neutral-800 space-y-2">
+            <div className="flex items-center justify-between">
               <span className="font-bold text-neutral-300 flex items-center gap-1.5">
                 <Smartphone className="w-4 h-4 text-sky-400" />
-                iOS & Android Native PWA
+                {localSettings.language === 'vi' ? 'Thông Tin & Hướng Dẫn' : 'App Info & Guide'}
               </span>
               <button
                 type="button"
@@ -204,7 +204,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {showInstallGuide && (
-              <div className="mt-3 pt-3 border-t border-neutral-800 space-y-2 text-[11px] text-neutral-300">
+              <div className="pt-2 border-t border-neutral-800 space-y-2 text-[11px] text-neutral-300">
                 <div className="bg-black/60 p-2.5 rounded-xl border border-neutral-800">
                   <strong className="text-white">📱 iPhone / iPad (iOS):</strong>
                   <p className="text-neutral-400 mt-0.5">
@@ -215,11 +215,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="bg-black/60 p-2.5 rounded-xl border border-neutral-800">
                   <strong className="text-white">🤖 Android:</strong>
                   <p className="text-neutral-400 mt-0.5">
-                    Chrome ➔ 3 dots ➔ <strong>"Install app"</strong>.
+                    Tải từ Google Play Store hoặc Chrome ➔ <strong>"Install app"</strong>.
                   </p>
                 </div>
               </div>
             )}
+
+            <div className="pt-2 border-t border-neutral-800 flex items-center justify-between text-[11px] text-neutral-400">
+              <a
+                href="/privacy.html"
+                target="_blank"
+                rel="noreferrer"
+                className="text-sky-400 hover:underline flex items-center gap-1"
+              >
+                {localSettings.language === 'vi' ? 'Chính sách quyền riêng tư (Privacy)' : 'Privacy Policy'}
+              </a>
+              <span>v1.0.0 (Google Play Ready)</span>
+            </div>
           </div>
 
           {/* Actions */}

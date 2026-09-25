@@ -4,3 +4,5 @@ dist/
 *.local
 .env
 .env.*.local
+testers.csv
+android/app/snoozetax.jks

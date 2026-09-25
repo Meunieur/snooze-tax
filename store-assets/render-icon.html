@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 512px; height: 512px; overflow: hidden; background: transparent; }
+    img, svg { width: 512px; height: 512px; display: block; }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get('file') || 'concept-1-flame-gold.svg';
+    const img = document.createElement('img');
+    img.src = file;
+    document.getElementById('container').appendChild(img);
+  </script>
+</body>
+</html>

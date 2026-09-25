@@ -8,7 +8,7 @@ const STORAGE_KEYS = {
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  currency: 'USD',
+  currency: 'VND',
   defaultFeeUSD: 5,
   defaultFeeVND: 50000,
   savageRoast: true,
@@ -25,8 +25,8 @@ export const INITIAL_ALARMS: Alarm[] = [
     label: 'Dậy đi làm làm giàu cho tư bản',
     enabled: true,
     days: [1, 2, 3, 4, 5],
-    snoozeFee: 5,
-    currency: 'USD',
+    snoozeFee: 50000,
+    currency: 'VND',
     snoozeCount: 0,
     soundTone: 'digital',
     mathChallenge: true
@@ -37,8 +37,8 @@ export const INITIAL_ALARMS: Alarm[] = [
     label: 'Chạy bộ thể dục săn múi',
     enabled: false,
     days: [1, 3, 5, 6],
-    snoozeFee: 10,
-    currency: 'USD',
+    snoozeFee: 100000,
+    currency: 'VND',
     snoozeCount: 0,
     soundTone: 'nuclear',
     mathChallenge: true
@@ -51,8 +51,8 @@ export const INITIAL_STATS: UserStats = {
   totalPenaltyUSD: 0,
   totalPenaltyVND: 0,
   totalSnoozeCount: 0,
-  totalOnTimeCount: 4,
-  currentStreak: 2,
+  totalOnTimeCount: 0,
+  currentStreak: 0,
   worstDay: 'Chưa có'
 };
 

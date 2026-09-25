@@ -62,9 +62,45 @@ export function App() {
       language: nextLang,
       currency: nextCurrency
     }));
+    setAlarms(prev =>
+      prev.map(a => ({
+        ...a,
+        currency: nextCurrency,
+        snoozeFee:
+          nextCurrency === 'VND'
+            ? (a.currency === 'USD' ? 50000 : a.snoozeFee)
+            : (a.currency === 'VND' ? 5 : a.snoozeFee)
+      }))
+    );
     triggerHaptic('light');
     showToast(nextLang === 'en' ? 'Switched to English (USD)' : 'Đã chuyển sang Tiếng Việt (VNĐ)');
   };
+
+  const handleSaveSettings = (newSettings: AppSettings) => {
+    if (newSettings.currency !== settings.currency) {
+      setAlarms(prev =>
+        prev.map(a => ({
+          ...a,
+          currency: newSettings.currency,
+          snoozeFee:
+            newSettings.currency === 'VND'
+              ? (a.currency === 'USD' ? 50000 : a.snoozeFee)
+              : (a.currency === 'VND' ? 5 : a.snoozeFee)
+        }))
+      );
+    }
+    setSettings(newSettings);
+  };
+
+  // Đồng bộ số lần quẹt nếu mảng records có nhiều hơn stats
+  useEffect(() => {
+    if (records.length > stats.totalSnoozeCount) {
+      setStats(prev => ({
+        ...prev,
+        totalSnoozeCount: records.length
+      }));
+    }
+  }, [records.length, stats.totalSnoozeCount]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -387,7 +423,7 @@ export function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
-        onSaveSettings={setSettings}
+        onSaveSettings={handleSaveSettings}
       />
 
       {/* Active Ringing Alarm Overlay */}

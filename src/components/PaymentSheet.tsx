@@ -4,6 +4,7 @@ import { Currency } from '../types';
 import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../services/haptics';
 import { Language, TRANSLATIONS } from '../services/i18n';
+import { isAndroid, isIOS } from '../services/platform';
 
 interface PaymentSheetProps {
   isOpen: boolean;
@@ -48,10 +49,11 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
       triggerHaptic('heavy');
 
       // Mock bank transaction push notification
+      const cardName = isIOS ? 'Apple Card' : isAndroid ? 'Google Wallet' : 'Visa Debit';
       setBankNotification(
         currency === 'USD'
-          ? `Apple Card: -$${fee.toFixed(2)} paid to Snooze Tax Inc. Enjoy 5 more minutes!`
-          : `Visa •••• 8868: Đã thanh toán -${fee.toLocaleString('vi-VN')}đ tại Snooze Tax Inc.`
+          ? `${cardName}: -$${fee.toFixed(2)} paid to Snooze Tax Inc. Enjoy 5 more minutes!`
+          : `${cardName} •••• 8868: Đã thanh toán -${fee.toLocaleString('vi-VN')}đ tại Snooze Tax Inc.`
       );
 
       // Auto finish and snooze alarm after 1.3s
@@ -84,9 +86,16 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
         {/* Top Handle & Brand */}
         <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
           <div className="flex items-center gap-1.5 font-bold text-base tracking-tight">
-            <span className="text-xl"></span>
-            <span>Pay</span>
-            <span className="text-xs font-normal text-neutral-400 ml-1">/ Google Pay</span>
+            {isIOS ? (
+              <>
+                <span className="text-xl"></span>
+                <span>Pay</span>
+              </>
+            ) : isAndroid ? (
+              <span className="text-base font-extrabold text-white">Google Pay</span>
+            ) : (
+              <span className="text-base font-extrabold text-white">Google Pay / Apple Pay</span>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -118,12 +127,12 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({
             </div>
             <div>
               <div className="font-bold text-white flex items-center gap-1.5">
-                <span>Apple Card / Visa</span>
+                <span>{isIOS ? 'Apple Card / Visa' : isAndroid ? 'Google Wallet / Visa' : 'Visa / MasterCard'}</span>
                 <span className="text-[10px] text-neutral-400 font-mono">•••• 8868</span>
               </div>
               <p className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" />
-                <span>{language === 'vi' ? 'Xác thực sinh trắc học an toàn' : 'Biometric Face ID Secured'}</span>
+                <span>{language === 'vi' ? 'Xác thực sinh trắc học an toàn' : 'Biometric Face / Fingerprint Secured'}</span>
               </p>
             </div>
           </div>
