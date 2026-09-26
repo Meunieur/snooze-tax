@@ -1,6 +1,6 @@
 {
   "appId": "com.snoozetax.nicealarm",
-  "appName": "Snooze Tax - Báo Thức Phạt Tiền",
+  "appName": "Snooze Tax",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
